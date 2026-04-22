@@ -1,0 +1,5 @@
+{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=../HamburguerDev.Data/Database/HamburguerDev.db"
+  }
+}
