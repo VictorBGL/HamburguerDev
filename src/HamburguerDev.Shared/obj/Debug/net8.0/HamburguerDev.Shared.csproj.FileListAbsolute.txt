@@ -1,0 +1,15 @@
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\bin\Debug\net8.0\HamburguerDev.Shared.deps.json
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\bin\Debug\net8.0\HamburguerDev.Shared.runtimeconfig.json
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\bin\Debug\net8.0\HamburguerDev.Shared.dll
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\bin\Debug\net8.0\HamburguerDev.Shared.pdb
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.csproj.AssemblyReference.cache
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.GeneratedMSBuildEditorConfig.editorconfig
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.AssemblyInfoInputs.cache
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.AssemblyInfo.cs
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.csproj.CoreCompileInputs.cache
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.sourcelink.json
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.dll
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\refint\HamburguerDev.Shared.dll
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.pdb
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\HamburguerDev.Shared.genruntimeconfig.cache
+C:\Projetos\HamburguerDev\HamburguerDev\src\HamburguerDev.Shared\obj\Debug\net8.0\ref\HamburguerDev.Shared.dll

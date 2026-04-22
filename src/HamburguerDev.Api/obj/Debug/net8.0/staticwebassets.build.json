@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "+Mw08UHIOyZTK6rsJq2RvEeBGaIOD9QTuGUiOLWZlTM=",
+  "Source": "HamburguerDev.Api",
+  "BasePath": "_content/HamburguerDev.Api",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

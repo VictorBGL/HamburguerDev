@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/HamburguerDev.Api/HamburguerDev.Api.csproj" />
-    <Project Path="src/HamburguerDev.Business/HamburguerDev.Business.csproj" />
-    <Project Path="src/HamburguerDev.Data/HamburguerDev.Data.csproj" />
-    <Project Path="src/HamburguerDev.Shared/HamburguerDev.Shared.csproj" />
-  </Folder>
-</Solution>
