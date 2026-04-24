@@ -1,0 +1,10 @@
+.home-page {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.acoes-home {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}

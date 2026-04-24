@@ -49,6 +49,21 @@ public class PedidoRepository : IPedidoRepository
         return await BuscarPorId(pedido.Id);
     }
 
+    public async Task<Pedido?> Atualizar(Pedido pedido, IEnumerable<PedidoProduto> pedidoProdutos)
+    {
+        _context.Pedidos.Update(pedido);
+
+        var itensAtuais = await _context.PedidosProdutos
+            .Where(pp => pp.PedidoId == pedido.Id)
+            .ToListAsync();
+
+        _context.PedidosProdutos.RemoveRange(itensAtuais);
+        await _context.PedidosProdutos.AddRangeAsync(pedidoProdutos);
+        await _context.SaveChangesAsync();
+
+        return await BuscarPorId(pedido.Id);
+    }
+
     public async Task<bool> Excluir(Guid id)
     {
         var pedido = await _context.Pedidos.FirstOrDefaultAsync(p => p.Id == id);

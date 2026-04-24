@@ -38,5 +38,12 @@ namespace HamburguerDev.Business.Models
             Status = StatusPedidoEnum.FINALIZADO.ToString();
             DataFinalizacao = DateTime.Now;
         }
+
+        public void AtualizarValores(decimal total, decimal subtotal, decimal? descontoPorcentagem)
+        {
+            Total = total;
+            Subtotal = subtotal;
+            DescontoPorcentagem = descontoPorcentagem;
+        }
     }
 }

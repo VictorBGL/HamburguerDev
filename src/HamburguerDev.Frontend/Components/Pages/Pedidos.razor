@@ -1,0 +1,252 @@
+@page "/pedidos"
+@rendermode InteractiveServer
+
+<PageTitle>Pedidos</PageTitle>
+
+<div class="pedido-page">
+    <h1>Pedidos</h1>
+
+    <div class="filtro-wrapper">
+        <label for="codigoPedido" class="form-label">Filtrar por codigo</label>
+        <div class="filtro-actions">
+            <input id="codigoPedido" type="number" class="form-control" @bind="codigoFiltro" />
+            <button type="button" class="btn btn-primary" @onclick="FiltrarAsync" disabled="@carregando">
+                Buscar
+            </button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="LimparFiltroAsync" disabled="@carregando">
+                Limpar
+            </button>
+        </div>
+    </div>
+
+    @if (carregando)
+    {
+        <p><em>Carregando pedidos...</em></p>
+    }
+    else if (erros.Any())
+    {
+        <div class="alert alert-danger" role="alert">
+            <ul>
+                @foreach (var erro in erros)
+                {
+                    <li>@erro</li>
+                }
+            </ul>
+        </div>
+    }
+    else if (!pedidos.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            Nenhum pedido encontrado.
+        </div>
+    }
+    else
+    {
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Codigo</th>
+                    <th>Status</th>
+                    <th>Criacao</th>
+                    <th>Finalizacao</th>
+                    <th>Produtos</th>
+                    <th>Total</th>
+                    <th class="acoes-header">Acoes</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var pedido in pedidos)
+                {
+                    <tr>
+                        <td>@pedido.Codigo</td>
+                        <td>@pedido.Status</td>
+                        <td>@FormatarData(pedido.DataCriacao)</td>
+                        <td>@FormatarData(pedido.DataFinalizacao)</td>
+                        <td>@pedido.Produtos</td>
+                        <td>@pedido.Total.ToString("C")</td>
+                        <td>
+                            <div class="acoes-cell">
+                                @if (StatusCriado(pedido.Status))
+                                {
+                                    <button type="button"
+                                            class="btn-icon btn-finalizar"
+                                            data-tooltip="Finalizar pedido"
+                                            aria-label="Finalizar pedido"
+                                            @onclick="() => AbrirConfirmacaoFinalizar(pedido.Id)">
+                                        <svg viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M16 2L6 14 0 8l2-2 4 4L14 0z" />
+                                        </svg>
+                                    </button>
+
+                                    <button type="button"
+                                            class="btn-icon btn-editar"
+                                            data-tooltip="Editar pedido"
+                                            aria-label="Editar pedido"
+                                            @onclick="() => EditarPedidoAsync(pedido.Id)">
+                                        <svg viewBox="0 0 16 16" aria-hidden="true">
+                                            <path d="M12.854.146a.5.5 0 0 1 .707 0l2.293 2.293a.5.5 0 0 1 0 .707l-9.5 9.5L4 13l.354-2.354 9.5-9.5zM3.5 13.5L0 14l.5-3.5 10-10L13.5 4l-10 10z" />
+                                        </svg>
+                                    </button>
+                                }
+
+                                <button type="button"
+                                        class="btn-icon btn-excluir"
+                                        data-tooltip="Excluir pedido"
+                                        aria-label="Excluir pedido"
+                                        @onclick="() => AbrirConfirmacaoExclusao(pedido.Id)">
+                                    <svg viewBox="0 0 16 16" aria-hidden="true">
+                                        <path d="M6.5 1h3l1 1H14v2H2V2h3.5l1-1zM3 5h10l-1 10H4L3 5zm3 2v6h1V7H6zm3 0v6h1V7H9z" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (modalConfirmacaoAberta)
+    {
+        <div class="modal-backdrop-custom" role="presentation"></div>
+        <div class="modal-confirmacao" role="dialog" aria-modal="true" aria-labelledby="confirmacaoTitulo">
+            <h2 id="confirmacaoTitulo">Confirmacao</h2>
+            <p>@mensagemConfirmacao</p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline-secondary" @onclick="FecharModalConfirmacao" disabled="@processandoAcao">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" @onclick="ConfirmarAcaoAsync" disabled="@processandoAcao">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Inject]
+    private IPedidoApiService PedidoApiService { get; set; } = null!;
+
+    [Inject]
+    private NavigationManager Navigation { get; set; } = null!;
+
+    private List<PedidoResponseModel> pedidos = [];
+    private List<string> erros = [];
+    private int? codigoFiltro;
+    private bool carregando;
+    private bool modalConfirmacaoAberta;
+    private bool processandoAcao;
+    private Guid? pedidoPendenteId;
+    private AcaoPedido? acaoPendente;
+    private string mensagemConfirmacao = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarPedidosAsync();
+    }
+
+    private async Task FiltrarAsync()
+    {
+        await CarregarPedidosAsync();
+    }
+
+    private async Task LimparFiltroAsync()
+    {
+        codigoFiltro = null;
+        await CarregarPedidosAsync();
+    }
+
+    private async Task CarregarPedidosAsync()
+    {
+        carregando = true;
+        erros.Clear();
+
+        var (resultadoPedidos, resultadoErros) = await PedidoApiService.BuscarPedidosAsync(codigoFiltro);
+
+        pedidos = resultadoPedidos.ToList();
+        erros = resultadoErros.ToList();
+
+        carregando = false;
+    }
+
+    private void AbrirConfirmacaoFinalizar(Guid pedidoId)
+    {
+        pedidoPendenteId = pedidoId;
+        acaoPendente = AcaoPedido.Finalizar;
+        mensagemConfirmacao = "Deseja finalizar este pedido?";
+        modalConfirmacaoAberta = true;
+    }
+
+    private Task EditarPedidoAsync(Guid pedidoId)
+    {
+        Navigation.NavigateTo($"/pedidos/{pedidoId}/editar");
+        return Task.CompletedTask;
+    }
+
+    private void AbrirConfirmacaoExclusao(Guid pedidoId)
+    {
+        pedidoPendenteId = pedidoId;
+        acaoPendente = AcaoPedido.Excluir;
+        mensagemConfirmacao = "Deseja excluir este pedido?";
+        modalConfirmacaoAberta = true;
+    }
+
+    private async Task ConfirmarAcaoAsync()
+    {
+        if (!pedidoPendenteId.HasValue || !acaoPendente.HasValue)
+        {
+            FecharModalConfirmacao();
+            return;
+        }
+
+        processandoAcao = true;
+        IReadOnlyList<string> errosAcao;
+
+        if (acaoPendente == AcaoPedido.Finalizar)
+        {
+            errosAcao = await PedidoApiService.FinalizarPedidoAsync(pedidoPendenteId.Value);
+        }
+        else
+        {
+            errosAcao = await PedidoApiService.ExcluirPedidoAsync(pedidoPendenteId.Value);
+        }
+
+        processandoAcao = false;
+        FecharModalConfirmacao();
+
+        if (errosAcao.Any())
+        {
+            erros = errosAcao.ToList();
+            return;
+        }
+
+        await CarregarPedidosAsync();
+    }
+
+    private void FecharModalConfirmacao()
+    {
+        modalConfirmacaoAberta = false;
+        pedidoPendenteId = null;
+        acaoPendente = null;
+        mensagemConfirmacao = string.Empty;
+    }
+
+    private static bool StatusCriado(string status)
+    {
+        return string.Equals(status, "CRIADO", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string FormatarData(DateTime? data)
+    {
+        return data.HasValue
+            ? data.Value.ToString("dd/MM/yyyy HH:mm")
+            : "-";
+    }
+
+    private enum AcaoPedido
+    {
+        Finalizar,
+        Excluir
+    }
+}

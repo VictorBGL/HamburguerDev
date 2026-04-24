@@ -1,0 +1,153 @@
+.pedido-page {
+    display: grid;
+    gap: 1rem;
+}
+
+.filtro-wrapper {
+    display: grid;
+    gap: 0.5rem;
+    max-width: 540px;
+}
+
+.filtro-actions {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.75rem;
+}
+
+.acoes-header {
+    text-align: center;
+    width: 150px;
+}
+
+.acoes-cell {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-icon {
+    width: 34px;
+    height: 34px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: #f8f9fa;
+    color: #212529;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    overflow: visible;
+    transition: all 0.2s ease;
+}
+
+.btn-icon::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1f2937;
+    color: #fff;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    padding: 0.3rem 0.5rem;
+    border-radius: 0.4rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+    z-index: 2;
+}
+
+.btn-icon::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 6px 5px 0 5px;
+    border-style: solid;
+    border-color: #1f2937 transparent transparent transparent;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+    z-index: 2;
+}
+
+.btn-icon:hover::after,
+.btn-icon:hover::before,
+.btn-icon:focus-visible::after,
+.btn-icon:focus-visible::before {
+    opacity: 1;
+}
+
+.btn-icon svg {
+    width: 14px;
+    height: 14px;
+    fill: currentColor;
+}
+
+.btn-finalizar:hover {
+    background: #d1f7dc;
+    color: #146c43;
+}
+
+.btn-editar:hover {
+    background: #cfe2ff;
+    color: #0d6efd;
+}
+
+.btn-excluir:hover {
+    background: #f8d7da;
+    color: #842029;
+}
+
+.modal-backdrop-custom {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 1040;
+}
+
+.modal-confirmacao {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(92vw, 420px);
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.25);
+    z-index: 1050;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.modal-confirmacao h2 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.modal-confirmacao p {
+    margin: 0;
+    color: #374151;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+@media (max-width: 768px) {
+    .filtro-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .acoes-header {
+        width: auto;
+    }
+}

@@ -95,6 +95,25 @@ namespace HamburguerDev.Api.Controllers
             return CustomResponse(_mapper.Map<PedidoDetalheResponseModel>(pedido));
         }
 
+        [HttpPut("{id:guid}")]
+        [Produces("application/json")]
+        [ProducesResponseType(typeof(PedidoDetalheResponseModel), 200)]
+        public async Task<IActionResult> Atualizar([FromRoute] Guid id, [FromBody] PedidoValidacaoModel model)
+        {
+            var pedido = await _service.AtualizarPedido(id, model.ProdutosId);
+
+            if (!OperacaoValida())
+                return CustomResponse();
+
+            if (pedido is null)
+            {
+                NotificarErro("Erro ao atualizar pedido.");
+                return CustomResponse();
+            }
+
+            return CustomResponse(_mapper.Map<PedidoDetalheResponseModel>(pedido));
+        }
+
         [HttpDelete("{id:guid}")]
         [Produces("application/json")]
         public async Task<IActionResult> Excluir([FromRoute] Guid id)

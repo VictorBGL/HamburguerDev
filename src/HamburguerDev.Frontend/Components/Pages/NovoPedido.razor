@@ -1,0 +1,343 @@
+@page "/pedidos/novo"
+@page "/pedidos/{PedidoId:guid}/editar"
+@rendermode InteractiveServer
+
+<PageTitle>@(ModoEdicao ? "Editar pedido" : "Novo pedido")</PageTitle>
+
+<div class="novo-pedido-page">
+	<h1>@(ModoEdicao ? "Editar pedido" : "Novo pedido")</h1>
+
+	@if (errosTela.Any())
+	{
+		<div class="alert alert-danger" role="alert">
+			<ul>
+				@foreach (var erro in errosTela)
+				{
+					<li>@erro</li>
+				}
+			</ul>
+		</div>
+	}
+
+	<div class="bloco-selecao">
+		<label for="produtoBusca" class="form-label">Produto</label>
+		<div class="autocomplete-wrapper">
+			<input id="produtoBusca"
+				   class="form-control"
+				   type="text"
+				   value="@termoProduto"
+				   @oninput="AoDigitarProdutoAsync"
+				   @onfocus="AbrirSugestoes"
+				     @onblur="FecharSugestoesAoPerderFocoAsync"
+				   autocomplete="off"
+				   placeholder="Digite para buscar por nome" />
+
+			@if (mostrarSugestoes)
+			{
+				<div class="autocomplete-list">
+					@if (carregandoProdutos)
+					{
+						<div class="autocomplete-empty">Carregando produtos...</div>
+					}
+					else if (!produtosAutocomplete.Any())
+					{
+						<div class="autocomplete-empty">Nenhum produto encontrado.</div>
+					}
+					else
+					{
+						@foreach (var produto in produtosAutocomplete)
+						{
+							<button type="button"
+									class="autocomplete-item"
+									@onmousedown="() => SelecionarProdutoAsync(produto)">
+								<span>@produto.Codigo - @produto.Nome</span>
+								<small>@produto.Preco.ToString("C")</small>
+							</button>
+						}
+					}
+				</div>
+			}
+		</div>
+	</div>
+
+	<div class="bloco-tabela">
+		<h2>Produtos selecionados</h2>
+
+		@if (!produtosSelecionados.Any())
+		{
+			<div class="alert alert-info" role="alert">
+				Nenhum produto selecionado.
+			</div>
+		}
+		else
+		{
+			<table class="table table-striped table-hover">
+				<thead>
+					<tr>
+						<th>Codigo</th>
+						<th>Nome</th>
+						<th>Preco</th>
+						<th class="coluna-acoes">Acoes</th>
+					</tr>
+				</thead>
+				<tbody>
+					@foreach (var produto in produtosSelecionados)
+					{
+						<tr>
+							<td>@produto.Codigo</td>
+							<td>@produto.Nome</td>
+							<td>@produto.Preco.ToString("C")</td>
+							<td class="coluna-acoes">
+								<button type="button"
+										class="btn-icon btn-excluir"
+										title="Excluir produto"
+										aria-label="Excluir produto"
+										@onclick="() => RemoverProdutoAsync(produto.Id)">
+									<svg viewBox="0 0 16 16" aria-hidden="true">
+										<path d="M6.5 1h3l1 1H14v2H2V2h3.5l1-1zM3 5h10l-1 10H4L3 5zm3 2v6h1V7H6zm3 0v6h1V7H9z" />
+									</svg>
+								</button>
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		}
+	</div>
+
+	<div class="bloco-resumo">
+		<div>
+			<label class="form-label">Subtotal</label>
+			<input class="form-control" value="@subtotal.ToString("C")" readonly />
+		</div>
+		<div>
+			<label class="form-label">Desconto porcentagem</label>
+			<input class="form-control" value="@(descontoPorcentagem?.ToString("0.##") ?? "0")" readonly />
+		</div>
+		<div>
+			<label class="form-label">Total</label>
+			<input class="form-control" value="@total.ToString("C")" readonly />
+		</div>
+	</div>
+
+	<div class="bloco-acoes-salvar">
+		<button type="button"
+				class="btn btn-primary"
+				@onclick="SalvarAsync"
+				disabled="@(!produtosSelecionados.Any() || salvandoPedido)">
+			@(salvandoPedido ? "Salvando..." : (ModoEdicao ? "Salvar alteracoes" : "Salvar pedido"))
+		</button>
+	</div>
+
+	@if (modalErrosValidacaoAberta)
+	{
+		<div class="modal-backdrop-custom" role="presentation"></div>
+		<div class="modal-confirmacao" role="dialog" aria-modal="true" aria-labelledby="validacaoTitulo">
+			<h2 id="validacaoTitulo">@tituloModalErros</h2>
+			<ul>
+				@foreach (var erro in errosValidacao)
+				{
+					<li>@erro</li>
+				}
+			</ul>
+			<div class="modal-actions">
+				<button type="button" class="btn btn-primary" @onclick="FecharModalErrosValidacao">
+					Ok
+				</button>
+			</div>
+		</div>
+	}
+</div>
+
+@code {
+	[Inject]
+	private IPedidoApiService PedidoApiService { get; set; } = null!;
+
+	[Inject]
+	private NavigationManager Navigation { get; set; } = null!;
+
+	[Parameter]
+	public Guid? PedidoId { get; set; }
+
+	private List<ProdutoResponseModel> produtosAutocomplete = [];
+	private List<ProdutoResponseModel> produtosSelecionados = [];
+	private List<string> errosTela = [];
+	private List<string> errosValidacao = [];
+	private string termoProduto = string.Empty;
+	private bool mostrarSugestoes;
+	private bool carregandoProdutos;
+	private bool salvandoPedido;
+	private bool modalErrosValidacaoAberta;
+	private decimal subtotal;
+	private decimal total;
+	private decimal? descontoPorcentagem;
+	private string tituloModalErros = string.Empty;
+	private bool ModoEdicao => PedidoId.HasValue;
+
+	protected override async Task OnInitializedAsync()
+	{
+		await CarregarProdutosAsync();
+
+		if (ModoEdicao)
+		{
+			await CarregarPedidoParaEdicaoAsync();
+		}
+	}
+
+	private async Task AoDigitarProdutoAsync(ChangeEventArgs args)
+	{
+		termoProduto = args.Value?.ToString() ?? string.Empty;
+		await CarregarProdutosAsync(termoProduto);
+		mostrarSugestoes = true;
+	}
+
+	private void AbrirSugestoes()
+	{
+		mostrarSugestoes = true;
+	}
+
+	private async Task FecharSugestoesAoPerderFocoAsync(FocusEventArgs _)
+	{
+		await Task.Delay(120);
+		mostrarSugestoes = false;
+	}
+
+	private async Task SelecionarProdutoAsync(ProdutoResponseModel produto)
+	{
+		var idsParaValidacao = produtosSelecionados
+			.Select(p => p.Id)
+			.Append(produto.Id)
+			.ToList();
+
+		var (validacao, erros) = await PedidoApiService.ValidarPedidoAsync(idsParaValidacao);
+
+		if (erros.Any() || validacao is null)
+		{
+			tituloModalErros = "Nao foi possivel adicionar o produto";
+			errosValidacao = erros.Any() ? erros.ToList() : ["Falha ao validar pedido."];
+			modalErrosValidacaoAberta = true;
+			await ResetarAutocompleteAsync();
+			return;
+		}
+
+		produtosSelecionados.Add(produto);
+		AplicarValidacao(validacao);
+		await ResetarAutocompleteAsync();
+	}
+
+	private async Task RemoverProdutoAsync(Guid produtoId)
+	{
+		var indice = produtosSelecionados.FindIndex(p => p.Id == produtoId);
+		if (indice < 0)
+		{
+			return;
+		}
+
+		produtosSelecionados.RemoveAt(indice);
+
+		if (!produtosSelecionados.Any())
+		{
+			subtotal = 0m;
+			total = 0m;
+			descontoPorcentagem = 0m;
+			return;
+		}
+
+		var idsParaValidacao = produtosSelecionados.Select(p => p.Id);
+		var (validacao, erros) = await PedidoApiService.ValidarPedidoAsync(idsParaValidacao);
+
+		if (erros.Any() || validacao is null)
+		{
+			errosTela = erros.Any() ? erros.ToList() : ["Falha ao recalcular pedido."];
+			return;
+		}
+
+		errosTela.Clear();
+		AplicarValidacao(validacao);
+	}
+
+	private async Task CarregarProdutosAsync(string? nome = null)
+	{
+		carregandoProdutos = true;
+		var (produtos, erros) = await PedidoApiService.BuscarProdutosAsync(nome);
+		carregandoProdutos = false;
+
+		produtosAutocomplete = produtos.ToList();
+		errosTela = erros.ToList();
+	}
+
+	private async Task ResetarAutocompleteAsync()
+	{
+		termoProduto = string.Empty;
+		mostrarSugestoes = false;
+		await CarregarProdutosAsync();
+	}
+
+	private async Task SalvarAsync()
+	{
+		if (!produtosSelecionados.Any())
+		{
+			return;
+		}
+
+		salvandoPedido = true;
+		IReadOnlyList<string> erros;
+
+		if (ModoEdicao)
+		{
+			erros = await PedidoApiService.AtualizarPedidoAsync(PedidoId!.Value, produtosSelecionados.Select(p => p.Id));
+		}
+		else
+		{
+			erros = await PedidoApiService.InserirPedidoAsync(produtosSelecionados.Select(p => p.Id));
+		}
+
+		salvandoPedido = false;
+
+		if (erros.Any())
+		{
+			tituloModalErros = ModoEdicao
+				? "Nao foi possivel atualizar o pedido"
+				: "Nao foi possivel salvar o pedido";
+			errosValidacao = erros.ToList();
+			modalErrosValidacaoAberta = true;
+			return;
+		}
+
+		Navigation.NavigateTo("/pedidos");
+	}
+
+	private async Task CarregarPedidoParaEdicaoAsync()
+	{
+		var (pedido, erros) = await PedidoApiService.BuscarPedidoPorIdAsync(PedidoId!.Value);
+
+		if (erros.Any() || pedido is null)
+		{
+			errosTela = erros.Any() ? erros.ToList() : ["Nao foi possivel carregar os dados do pedido."];
+			return;
+		}
+
+		produtosSelecionados = pedido.PedidoProdutos?
+			.Where(pp => pp.Produto is not null)
+			.Select(pp => pp.Produto)
+			.ToList() ?? [];
+
+		subtotal = pedido.Subtotal;
+		total = pedido.Total;
+		descontoPorcentagem = pedido.DescontoPorcentagem ?? 0m;
+	}
+
+	private void AplicarValidacao(PedidoValidacaoDto validacao)
+	{
+		subtotal = validacao.Subtotal;
+		total = validacao.Total;
+		descontoPorcentagem = validacao.DescontoPorcentagem ?? 0m;
+	}
+
+	private void FecharModalErrosValidacao()
+	{
+		modalErrosValidacaoAberta = false;
+		tituloModalErros = string.Empty;
+		errosValidacao.Clear();
+	}
+}

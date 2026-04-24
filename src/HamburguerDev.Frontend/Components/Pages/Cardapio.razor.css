@@ -1,0 +1,136 @@
+.cardapio-page {
+    display: grid;
+    gap: 1.1rem;
+    max-width: 1180px;
+    margin: 0 auto;
+    font-family: "Segoe UI", "Trebuchet MS", sans-serif;
+}
+
+.hero-card {
+    padding: 1.25rem 1.4rem;
+    border-radius: 16px;
+    border: 1px solid #fed7aa;
+    background:
+        linear-gradient(115deg, rgba(255, 237, 213, 0.95), rgba(224, 242, 254, 0.9));
+}
+
+.hero-kicker {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #9a3412;
+    font-size: 0.75rem;
+}
+
+.hero-card h1 {
+    margin: 0.15rem 0 0;
+    color: #111827;
+    font-size: clamp(1.5rem, 3vw, 2.2rem);
+}
+
+.hero-card p {
+    margin: 0.45rem 0 0;
+    color: #374151;
+}
+
+.filtros-card {
+    display: grid;
+    grid-template-columns: 140px 1fr auto;
+    gap: 0.75rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.filtro-codigo,
+.filtro-nome {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.filtro-botoes {
+    display: flex;
+    align-items: end;
+    gap: 0.55rem;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.produto-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 12px 25px rgba(15, 23, 42, 0.06);
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.produto-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.1);
+}
+
+.img-placeholder {
+    height: 142px;
+    border-bottom: 1px dashed #cbd5e1;
+    border-top: 4px solid #f97316;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    background: repeating-linear-gradient(
+        45deg,
+        #fff7ed,
+        #fff7ed 12px,
+        #ffedd5 12px,
+        #ffedd5 24px
+    );
+}
+
+.produto-info {
+    padding: 0.85rem 0.95rem 1rem;
+    display: grid;
+    gap: 0.3rem;
+}
+
+.produto-info h2 {
+    margin: 0;
+    font-size: 1.08rem;
+    color: #0f172a;
+}
+
+.codigo {
+    color: #64748b;
+    font-weight: 600;
+}
+
+.tipo {
+    margin: 0;
+    color: #475569;
+}
+
+.preco {
+    margin: 0.35rem 0 0;
+    color: #0c4a6e;
+    font-weight: 700;
+    font-size: 1.08rem;
+}
+
+@media (max-width: 768px) {
+    .filtros-card {
+        grid-template-columns: 1fr;
+    }
+
+    .filtro-botoes {
+        justify-content: flex-start;
+    }
+}

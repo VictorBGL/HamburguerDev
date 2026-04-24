@@ -1,0 +1,121 @@
+@page "/cardapio"
+@rendermode InteractiveServer
+@layout HamburguerDev.Frontend.Components.Layout.CardapioLayout
+
+<PageTitle>Cardapio</PageTitle>
+
+<div class="cardapio-page">
+    <div class="hero-card">
+        <div>
+            <p class="hero-kicker">HamburguerDev</p>
+            <h1>Cardapio</h1>
+            <p>Explore sabores, filtre rapido e encontre seu proximo pedido.</p>
+        </div>
+    </div>
+
+    <div class="filtros-card">
+        <div class="filtro-codigo">
+            <label for="codigoProduto" class="form-label">Codigo</label>
+            <input id="codigoProduto" type="number" class="form-control" @bind="codigoFiltro" />
+        </div>
+
+        <div class="filtro-nome">
+            <label for="nomeProduto" class="form-label">Nome</label>
+            <input id="nomeProduto" type="text" class="form-control" @bind="nomeFiltro" />
+        </div>
+
+        <div class="filtro-botoes">
+            <button type="button" class="btn btn-primary" @onclick="BuscarAsync" disabled="@carregando">
+                Buscar
+            </button>
+            <button type="button" class="btn btn-outline-secondary" @onclick="LimparAsync" disabled="@carregando">
+                Limpar
+            </button>
+        </div>
+    </div>
+
+    @if (carregando)
+    {
+        <p><em>Carregando cardapio...</em></p>
+    }
+    else if (erros.Any())
+    {
+        <div class="alert alert-danger" role="alert">
+            <ul>
+                @foreach (var erro in erros)
+                {
+                    <li>@erro</li>
+                }
+            </ul>
+        </div>
+    }
+    else if (!produtos.Any())
+    {
+        <div class="alert alert-info" role="alert">
+            Nenhum produto encontrado.
+        </div>
+    }
+    else
+    {
+        <div class="cards-grid">
+            @foreach (var produto in produtos)
+            {
+                <article class="produto-card">
+                    <div class="img-placeholder" aria-hidden="true">
+                        <span>sem imagem</span>
+                    </div>
+
+                    <div class="produto-info">
+                        <small class="codigo">Codigo @produto.Codigo</small>
+                        <h2>@produto.Nome</h2>
+                        <p class="tipo">@(produto.Acompanhamento ? "Acompanhamento" : "Sanduiche")</p>
+                        <p class="preco">@produto.Preco.ToString("C")</p>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Inject]
+    private IPedidoApiService PedidoApiService { get; set; } = null!;
+
+    private List<ProdutoResponseModel> produtos = [];
+    private List<string> erros = [];
+    private int? codigoFiltro;
+    private string nomeFiltro = string.Empty;
+    private bool carregando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarProdutosAsync();
+    }
+
+    private async Task BuscarAsync()
+    {
+        await CarregarProdutosAsync();
+    }
+
+    private async Task LimparAsync()
+    {
+        codigoFiltro = null;
+        nomeFiltro = string.Empty;
+        await CarregarProdutosAsync();
+    }
+
+    private async Task CarregarProdutosAsync()
+    {
+        carregando = true;
+        erros.Clear();
+
+        var (resultadoProdutos, resultadoErros) = await PedidoApiService.BuscarProdutosAsync(
+            nome: nomeFiltro,
+            codigo: codigoFiltro);
+
+        produtos = resultadoProdutos.ToList();
+        erros = resultadoErros.ToList();
+
+        carregando = false;
+    }
+}

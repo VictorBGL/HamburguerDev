@@ -29,7 +29,7 @@ public class PedidoService : IPedidoService
             pedidos = pedidos.Where(p => p.Codigo == codigo.Value);
         }
 
-        return pedidos.OrderBy(p => p.DataCriacao);
+        return pedidos.OrderByDescending(p => p.DataCriacao);
     }
 
     public async Task<Pedido?> BuscarPorId(Guid id)
@@ -49,15 +49,23 @@ public class PedidoService : IPedidoService
             return null;
         }
 
-        var produtos = (await _produtoRepository.Buscar())
-            .Where(p => ids.Contains(p.Id))
+        var produtosDisponiveis = (await _produtoRepository.Buscar())
+            .ToDictionary(p => p.Id, p => p);
+
+        var idsNaoEncontrados = ids
+            .Where(id => !produtosDisponiveis.ContainsKey(id))
+            .Distinct()
             .ToList();
 
-        if (produtos.Count != ids.Count)
+        if (idsNaoEncontrados.Any())
         {
             NotificarErro("Um ou mais produtos informados não foram encontrados.");
             return null;
         }
+
+        var produtos = ids
+            .Select(id => produtosDisponiveis[id])
+            .ToList();
 
         var quantidadeSanduiches = produtos.Count(p => !p.Acompanhamento);
         if (quantidadeSanduiches > 1)
@@ -144,6 +152,44 @@ public class PedidoService : IPedidoService
             .ToList();
 
         return await _pedidoRepository.Inserir(pedido, pedidoProdutos);
+    }
+
+    public async Task<Pedido?> AtualizarPedido(Guid id, IEnumerable<Guid>? produtosId)
+    {
+        var pedido = await _pedidoRepository.BuscarPorId(id);
+
+        if (pedido is null)
+        {
+            NotificarErro("Pedido não encontrado.");
+            return null;
+        }
+
+        if (pedido.Status == StatusPedidoEnum.FINALIZADO.ToString())
+        {
+            NotificarErro("Não é possível editar um pedido finalizado.");
+            return null;
+        }
+
+        var validacao = await ValidarPedido(produtosId);
+        if (validacao is null || _notificador.TemNotificacao())
+        {
+            return null;
+        }
+
+        var ids = produtosId?
+            .Where(produtoId => produtoId != Guid.Empty)
+            .ToList() ?? [];
+
+        pedido.AtualizarValores(
+            total: validacao.Total,
+            subtotal: validacao.Subtotal,
+            descontoPorcentagem: validacao.DescontoPorcentagem);
+
+        var pedidoProdutos = ids
+            .Select(produtoId => new PedidoProduto(pedido.Id, produtoId))
+            .ToList();
+
+        return await _pedidoRepository.Atualizar(pedido, pedidoProdutos);
     }
 
     public async Task<Pedido?> FinalizarPedido(Guid id)
